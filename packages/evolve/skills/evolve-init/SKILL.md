@@ -5,13 +5,26 @@ description: Interview the user to prepare an evolve.md for a fresh evolutionary
 
 # evolve-init
 
-You help the user write `evolve.md` for `@pi-dacmicu/evolve`. Both the orchestrator and every subagent read this file.
+You help the user write `evolve.md` for LedgerEvolve. Both the orchestrator and every subagent read this file.
+
+LedgerEvolve delegates each iteration to a subagent engine (tested: `edxeth/pi-subagents`). If `~/.pi/agent/agents/evolve-iteration.md` does not exist, offer to create it with exactly this content (no body, so the child has no persona):
+
+```markdown
+---
+name: evolve-iteration
+description: Plain agent for exactly one evolve iteration (no persona, auto-exit). Not for other tasks.
+mode: interactive
+auto-exit: true
+---
+```
 
 ## Layout
 
 The codebase to evolve lives in a `target/` subdirectory; `evolve.md` and the Ledger live in the parent. This keeps variant branches (created inside `target/`) cleanly separated from the experiment metadata.
 
 If `target/` does not exist, ask the user to move/symlink/clone the codebase into it before continuing.
+
+`target/` must be its own git repository (`git -C target rev-parse --show-toplevel` prints the `target/` path itself, not a parent). Iterations create branches inside it; a `target/` that is a plain subdirectory of another repository would branch that outer repository instead.
 
 If `evolve.md` already exists, do not overwrite. Read it, summarize, ask whether to extend, replace, or abort.
 
@@ -50,7 +63,11 @@ When should the loop stop? Let the user phrase the conditions in their own words
 
 The orchestrator reads this section and judges it against the Ledger each iteration. `/evolve stop` and the `evolve` tool remain manual overrides.
 
-### 7. Inspiration
+### 7. Models
+
+Optional, and recommended: different models produce different ideas, and weaker or differently trained models often propose directions a frontier model does not. Ask for a list of model references (`provider/model`, as `pi --list-models` prints them) and a one-line selection note in the user's words, for example "cheap models first, escalate to the frontier model after two rows without improvement" or "round-robin, frontier model every third row". Recommend a model router (`@alexeiled/pi-model-router`) underneath so a blocked model, an exhausted subscription or a rate limit falls through to the next model instead of stalling the run. If the user declines, omit the section: every iteration then runs on the session's model.
+
+### 8. Inspiration
 
 Free-form notes: prior attempts, ideas to try, things to avoid, regions to focus on. Optional.
 
@@ -83,17 +100,24 @@ Write `evolve.md` in the parent of `target/`:
 
 <Free-form list of stop conditions, in the user's words.>
 
+## Models   # optional; omit the section if the user declined
+
+- <provider/model>
+- <provider/model>
+
+Selection: <the user's selection note>
+
 ## Inspiration
 
 <Notes, or "(none)".>
 
 ## Ledger
 
-| Branch | Parents | Score | Idea |
-|--------|---------|-------|------|
+| Branch | Parents | Score | Idea | Model |
+|--------|---------|-------|------|-------|
 ```
 
-**Branch naming convention:** each iteration creates a git branch inside `target/` named `dacmicu/evolve/vN/<slug>`, where `N` is the row's implicit ID (e.g. row #1 → `v1`, row #2 → `v2`). The version number must always match the row ID so the Ledger and branches stay aligned.
+**Branch naming convention:** each iteration creates a git branch inside `target/` named `ledgerevolve/vN/<slug>`, where `N` is the row's implicit ID (e.g. row #1 → `v1`, row #2 → `v2`). The version number must always match the row ID so the Ledger and branches stay aligned.
 
 ## After writing
 
