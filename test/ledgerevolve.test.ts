@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, appendFileSync, rmSync } from "n
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import evolveFactory from "../packages/evolve/index.js";
+import evolveFactory from "../src/index.ts";
 
 function createMockPi() {
 	const handlers = new Map<string, ((data: any) => void)[]>();

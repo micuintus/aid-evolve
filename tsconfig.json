@@ -8,5 +8,8 @@
     "isolatedModules": true,
     "skipLibCheck": true
   },
-  "include": ["packages", "test"]
+  "include": [
+    "src",
+    "test"
+  ]
 }

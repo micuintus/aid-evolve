@@ -1,19 +1,37 @@
 {
-  "name": "pi-dacmicu",
-  "version": "0.1.0",
+  "name": "@micuintus/ledgerevolve",
+  "version": "1.0.0",
+  "description": "Judgement-driven code evolution for Pi: one Markdown experiment, a ledger of lineages, one git branch per candidate.",
   "type": "module",
   "license": "MIT",
-  "scripts": {
-    "check": "tsc --noEmit",
-    "test": "tsx test/base-todo.test.ts && tsx test/todo-loop-integration.test.ts && tsx test/callback-integration.test.ts && tsx test/evolve-integration.test.ts"
+  "author": "Michael Voigt (micu) <micuintus@gmx.de>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/micuintus/ledgerevolve.git"
   },
+  "keywords": [
+    "pi-package",
+    "evolve",
+    "evolutionary",
+    "optimization",
+    "subagents"
+  ],
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
   "pi": {
     "extensions": [
-      "./packages/base/index.ts",
-      "./packages/todo/index.ts",
-      "./packages/callback/index.ts",
-      "./packages/evolve/index.ts"
+      "./src/index.ts"
     ]
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "tsx test/ledgerevolve.test.ts"
+  },
+  "dependencies": {
+    "@micuintus/loop-driver": "^1.0.0"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
@@ -21,10 +39,10 @@
     "typebox": "*"
   },
   "devDependencies": {
-    "@earendil-works/pi-ai": "0.99.1",
-    "@earendil-works/pi-coding-agent": "0.99.1",
-    "tsx": "^4.19.0",
+    "@earendil-works/pi-ai": "1.4.0",
+    "@earendil-works/pi-coding-agent": "1.4.0",
+    "tsx": "4.23.15",
     "typebox": "1.3.27",
-    "typescript": "^5.7.0"
+    "typescript": "5.9.3"
   }
 }

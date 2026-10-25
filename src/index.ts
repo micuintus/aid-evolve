@@ -1,6 +1,6 @@
 import type { AgentEndEvent, ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { attachLoopDriver } from "../base/index.js";
+import { attachLoopDriver } from "@micuintus/loop-driver";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
