@@ -1,15 +1,28 @@
-# json-codec-speedup example
+# Example: JSON encoder speedup
 
-The try-it-now example for LedgerEvolve. A naive but correct manual
-JSON serializer (`target/codec.js`) plus a gate plus benchmark
-(`target/bench.mjs`), a fixed 14-entry corpus, and an `evolve.md`
-with metric, gates, termination, and a Models section.
+A small, complete LedgerEvolve experiment that runs anywhere Node 20+
+runs, in minutes per iteration.
 
-Run it:
+- `target/codec.js`: a correct but deliberately slow JSON encoder.
+- `target/bench.mjs`: two gates (the encoder may not call the built-in
+  serializer, which the script traps; output byte-identical to
+  `JSON.stringify` on all 14 corpus entries) and the score (wall time for 200 passes over the
+  corpus, 5-run geometric mean).
+- `evolve.md`: goal, metric, gates, termination, models, empty ledger.
 
-1. `cd examples/json-codec` (the `target/` layout is required).
-2. Ask Pi to prepare the run (evolve-init skill), or read `evolve.md`.
-3. `/evolve` to start, `/evolve stop` to stop.
+## Run
 
-Baseline on the author's machine: gate passes 14/14, score ~36.5 ms.
-A good run finds 25%+ within the 12-row budget.
+```sh
+sh setup.sh ~/json-codec-run   # copies the example, makes target/ a git repo, prints the baseline
+cd ~/json-codec-run
+pi                             # then: /evolve
+```
+
+`setup.sh` exists because iterations create branches inside
+`target/`, so `target/` must be its own repository, not a folder
+inside this one.
+
+The baseline scores about 36.5 ms on an Apple M-series laptop; a
+straightforward hand-optimized encoder reaches about 10.5 ms. The
+termination rules stop the run after 12 rows, after four rows without
+improvement, or early at 10 ms.

@@ -1,6 +1,4 @@
-// Baseline JSON encoder: correct but deliberately naive. No dependencies.
-// Gate: encode(x) === JSON.stringify(x) for every corpus entry (see bench.mjs).
-// Variants optimize this file; the benchmark measures wall time over the corpus.
+// Baseline serializer: correct but deliberately naive. Gates and score: bench.mjs.
 
 function escapeString(s) {
 	// Slow path on purpose: one regex pass per call plus per-match function dispatch.

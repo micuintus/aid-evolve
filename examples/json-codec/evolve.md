@@ -18,31 +18,39 @@ main
 
 ## Gates
 
-- Gate exact-match: `node bench.mjs` exits 0 (`GATE exact-match PASS`
-  on all 14 corpus entries, byte-identical to native `JSON.stringify`).
+- Gate hand-written: the encoder is written by hand. It never uses
+  the built-in JSON serializer, directly or indirectly (`bench.mjs`
+  traps it and fails the row if it is called).
+- Gate exact-match: `node bench.mjs` exits 0; output is
+  byte-identical to `JSON.stringify` on all 14 corpus entries.
 - Gate no-deps: `target/package.json` gains no dependencies. Node
   builtins only.
 
 ## Termination
 
 - Stop after 12 ledger rows.
-- Stop early when a row scores at most 27 ms (25% under the ~36.5 ms base).
+- Stop early when a row scores at most 10 ms (3.5x faster than the ~36.5 ms base).
 - Run at least 4 iterations before any other condition fires.
 - Stop if the top score has not improved in 4 consecutive rows.
 
 ## Models
 
-Cheap high-throughput models first (any OpenCode Go flash-class
-model); escalate to a frontier model when the top score stalls for 2
-rows. Pi's model router recommended so a dead provider pauses nothing.
+Edit this list to models you have (`pi --list-models`), or delete the
+section to run every iteration on the session's model.
+
+- opencode-go/glm-5.3-flash
+- opencode-go/mimo-v2.6-pro
+- anthropic/claude-opus-5-5
+
+Selection: round-robin over the first two; use the last one when the
+top score has not improved for two rows.
 
 ## Inspiration
 
-Fast paths for short strings, join batching instead of `+=`, number
-formatting without intermediate arrays, lookup tables for escapes.
-(none beyond that.)
+The baseline is slow on purpose in a few places (escaping, number
+formatting, string building). Finding them is part of the exercise.
 
 ## Ledger
 
-| Branch | Parents | Score | Idea |
-|--------|---------|-------|------|
+| Branch | Parents | Score | Idea | Model |
+|--------|---------|-------|------|-------|
