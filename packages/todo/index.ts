@@ -41,6 +41,8 @@ const ITERATION_PROMPT = (formatted: string): string =>
 ` +
 	`Before working the next item:
 ` +
+`0. Engine check: this loop actuates the manage_todo_list tool from tintinweb/pi-manage-todo-list. If that tool does not exist in your toolset, do NOT invent todos: say the engine is missing and stop.
+` +
 	`1. If every item is already completed, clear the list immediately (pass an empty todoList). ` +
 	`The loop cannot stop while the list still contains items—completed or not. Do not leave completed items sitting.
 ` +
