@@ -1,180 +1,289 @@
-# Ledger-Guided Code Evolution on a Single Workstation
+# LedgerEvolve: Judgement-Driven Code Evolution for a Single Developer
 
-Technical Report — LedgerEvolve
+Technical Report, version 1.0, October 2026
 
 Michael Voigt (micu)
 
 ## Abstract
 
-We describe a lightweight evolutionary loop for code optimization
-in which an LLM judges and decides each step: it refines the best
-row, combines two rows, or diverges somewhere new, over a
-human-readable ledger of lineages. An experiment is one Markdown
-file; each iteration is one subagent run producing one git branch
-and one ledger row. Gates precede benchmarks; failed variants are
-retained as evidence. The system was validated on a synthetic
-benchmark and deployed on a production audio renderer (17 ledger
-rows, measured speedups with quality held). Total cost is bounded by
-iteration count times single-model calls, a fraction of
-population-based runs.
+LedgerEvolve is an evolutionary loop for code optimization designed
+for one developer on one workstation. It replaces the population
+machinery of systems such as AlphaEvolve, OpenEvolve, ShinkaEvolve and
+CodeEvolve (program databases, islands, LLM ensembles, evaluator
+pools) with three plain artifacts: a Markdown experiment file, a
+ledger table, and one git branch per candidate. Each iteration is a
+full agentic coding session that reads the entire ledger and decides,
+by judgement rather than by a genetic operator, whether to refine a
+prior candidate, combine two, or try something unrelated. Gates run
+before benchmarks, and failed candidates stay in the ledger as
+evidence. Over four months of use on a proprietary real-time renderer
+the loop produced 325 ledger rows in 8 experiments. We report the
+design, the evidence, the measured token cost, and the lessons about
+metric design that the deployment forced.
 
-## The problem
+## 1. Motivation
 
-Evolutionary code optimization works, but its packaging assumes a
-lab. FunSearch runs a distributed system: a programs database, 15
-LLM samplers, and evaluators communicating asynchronously. AlphaEvolve
-orchestrates an ensemble of Gemini Flash (breadth) and Gemini Pro
-(depth) through staged evaluation gates, tracked as a persistent
-server-side campaign resource. OpenEvolve, its open reimplementation,
-keeps the shape: a 500-program database across 5 islands, an LLM
-ensemble proposing edits, an evaluator pool scoring them, an async
-controller maximizing throughput (460 generations for circle packing
-n=26). ShinkaEvolve (Sakana AI, ICLR 2026) cuts the sample cost to
-150 samples for the same problem, but keeps the harness:
-bandit-based ensemble selection, novelty rejection sampling,
-parent-sampling schedules. All of them optimize the *search*, and all
-of them need operating. This system ran 17 ledger rows to a
-production renderer speedup with one subagent at a time on one
-workstation.
+LLM-driven program evolution works. FunSearch [1] discovered new
+mathematical constructions by sampling programs from a database into
+an LLM and scoring the results. AlphaEvolve [2] extended the idea to
+whole codebases with a Gemini Flash and Pro ensemble and staged
+evaluation. OpenEvolve [3], ShinkaEvolve [4] and CodeEvolve [5] made
+the approach open source and more sample-efficient.
 
-A single developer with one workstation needs the opposite trade:
-almost no infrastructure, full inspectability, and the human setting
-the fitness function. That is this system.
+These systems share an architecture: a population of programs, a
+selection policy (islands, MAP-Elites archives, bandit-chosen model
+ensembles), and an evaluator pool scored at high throughput. Each
+candidate is typically one LLM call producing one diff. The design
+maximizes the number of candidates per unit of compute, and it needs
+operating.
 
-## Related work
+A single developer optimizing a real codebase faces a different
+budget. Candidates that matter often need profiling, reading code
+across files, and running a test suite before a benchmark means
+anything. That is the work of an agentic coding session, not of one
+completion. LedgerEvolve takes that unit seriously: few, deep
+candidates instead of many shallow ones, with near-zero
+infrastructure.
 
-**Program evolution with LLMs.** FunSearch (DeepMind, Nature 2023)
-evolves programs against an `evaluate` function from a seed, sampling
-high scorers from a programs database into the next prompt. AlphaEvolve
-scales this to whole codebases with an LLM ensemble and staged
-evaluation gates. OpenEvolve reimplements it openly (islands, program
-database, async controller). ShinkaEvolve adds sample efficiency
-(parent sampling, novelty rejection, bandit ensemble choice).
+## 2. Design principles
 
-**Reflection over scalars.** GEPA (Berkeley, ICLR 2026) observes that
-classical optimizers collapse traces into one number; it has the LLM
-read full execution traces to diagnose *why* a candidate failed. This
-system's ledger rows do the same job in prose: each row records what
-was tried, what it measured, and what was refuted.
+**P1. One developer, one workstation.** No database server, no island
+scheduler, no evaluator pool. The full state of an experiment is one
+Markdown file plus git branches, readable and editable by hand.
 
-**Self-improving agents.** Darwin-Gödel Machine evolves the agent
-itself rather than a target program. Karpathy's `autoresearch` gives
-one agent one file, one GPU, one metric (`val_bpb`), overnight. The
-closest Pi-native relative is `pi-evo-research`, which keeps an
-explicit population of hypotheses with novelty injection against
-stagnation.
+**P2. Many agents over shared memory.** Every iteration is run by a
+fresh agent that reads every prior idea, score and refutation in the
+ledger, and may inspect any prior branch. It may refine a candidate,
+combine two (its row names both parents), or invent something new.
+Parent references turn the ledger into a network of lineages: a
+directed graph with merges, not a single line and not a set of
+isolated islands.
 
-**Position.** This system sits between Karpathy's single-file loop and
-OpenEvolve's population machinery: multi-file real codebases explored
-as a network of lineages rather than islands, steered by LLM
-judgement rather than a genetic algorithm, with shell-measured
-benchmarks instead of an evaluator pool and a Markdown ledger instead
-of a program database. Nothing here is novel in isolation. The
-combination, and the token bill, is the point.
+**P3. Judgement, not hill-climbing.** Selection is not
+fitness-proportional and not a genetic operator. The agent judges
+which direction is promising from the full record. Divergence is
+explicit policy: the iteration prompt names "diverge" and "creative"
+as first-class strategies alongside "refine" and "combine", because
+hill-climbing alone narrows the search to whatever worked first.
 
-## Method
+**P4. Model diversity.** Different models produce different ideas.
+The experiment file may name a set of models; iterations draw from it
+(Section 3.3).
 
-An experiment is one file, `evolve.md`: Goal, Metric (one primary,
-direction-tagged), Base branch, Gates (cheapest and most likely to
-fail first; each a shell command, an LLM judgement, or a manual
-check), Termination (user's own words, judged each iteration),
-Inspiration, and a Ledger table (`Branch | Parents | Score | Idea`).
+## 3. Method
 
-Each iteration is one subagent run, one git branch
-(`dacmicu/evolve/vN/<slug>`, N always equal to the ledger row ID),
-one idea pursued to completion: study the ledger, branch, change,
-gate on this variant only, benchmark once, append exactly one row,
-self-terminate. Failed iterations stay as `GATE_FAILED` rows; a crash
-that appends nothing pauses the loop instead of racing ahead. The
-orchestrator never evolves anything itself; it judges termination and
-spawns.
+### 3.1 The experiment file
 
-Three rules carry the design: gates before benchmarks (a variant that
-fails correctness never spends benchmark time), one shot per idea (no
-mid-iteration chasing), and full traceability (every row maps to one
-inspectable git branch).
+An experiment is one file, `evolve.md`, with fixed sections: Goal;
+Metric (one primary metric with unit and direction, optional
+secondaries); Base (the git ref candidates fork from); Gates
+(correctness checks ordered cheapest first, each a shell command, an
+LLM judgement, or a manual check); Termination (stop conditions in
+the user's own words); optional Models; Inspiration; and the Ledger:
 
-Three principles, stated plainly. First, one user, one workstation:
-no island farm, no evaluator pool, no persistent campaign server.
-Second, many minds over a network of lineages: each iteration sees
-every prior idea, score, and refutation, and the LLM decides whether
-to refine the best row, combine two rows, or diverge somewhere
-entirely new. This is judgement, not a genetic operator and not
-hill-climbing: hill-climbing alone narrows the search to whatever
-worked first, so the loop prompts for the unrelated idea on purpose. Third, measured judgement over scalars: gates and
-benchmarks are shell-measured where possible, LLM-judged where not,
-and the ledger records prose reasons next to numbers.
+| Branch | Parents | Score | Idea | Model |
+|--------|---------|-------|------|-------|
 
-A fourth element is model diversity per iteration. In the renderer
-runs, weaker and differently shaped models repeatedly contributed
-approaches the frontier model did not produce. The loop therefore
-accepts a configured model set (`## Models` in `evolve.md`: an
-ordered list plus a selection note, e.g. round-robin with
-frontier-model bias) and varies the worker per row. Pi's model
-router is the recommended selection layer: it continues to the next
-chain link on a blocked model, an exhausted subscription, or a
-tight budget, so a dead provider pauses nothing.
+The code under evolution lives in a `target/` directory beside the
+file, so experiment metadata never mixes with candidate branches.
 
-## Evidence
+### 3.2 One iteration
 
-**Prime counting (May 2026).** Trial division baseline (~13.8 s) to
-optimized pure-Python sieve variants, with gates before scoring and a
-fresh-subprocess anti-memoization metric. Established the loop
-mechanics.
+An orchestrating agent evaluates Termination against the Ledger. If
+no condition holds, it spawns exactly one subagent and ends its turn.
+The subagent:
 
-**proprietary real-time renderer (Jun–Oct 2026).** A production
-component under hard constraints (no MSAA, no QML layers, no
-compute/geometry/tessellation shaders). Seventeen ledger rows across
-two runs. Measured outcomes: worst-frame zoom-in 3.56 ms to 1.62 ms
-(v16 crossing-fold), GL pan cell 0.496 ms to 0.281 ms (v7
-envelope-ring), quality anchors at 1.0000 against the frozen truth
-throughout, refuted ideas recorded alongside wins (per-knot interior
-varying, classify-first fetch skipping, fixed edge padding). One row
-aborted on provider failure mid-profile and says so. Runs used a mix
-of frontier models for hard iterations and cheap high-throughput
-models (e.g. GLM-5.3-Flash class) for the rest, all on one developer
-workstation. Exact token totals were not metered; iteration counts
-(17 and ~22 rows) and the model mix bound the cost at a fraction of a
-population run.
+1. reads `evolve.md` and the ledger, and may check out any prior branch;
+2. picks a strategy (refine, combine, diverge, invent) and commits to one idea;
+3. creates branch `ledgerevolve/vN/<slug>`, where N equals the new row's index;
+4. implements the change and runs every Gate on this candidate only;
+5. if all Gates pass, runs the benchmark once; otherwise records `GATE_FAILED:<gate>`;
+6. appends exactly one ledger row and terminates.
 
-## The metric is the project
+The orchestrator is woken only by the subagent's completion. A crash
+that appends no row pauses the loop rather than spawning blindly; a
+duplicate-spawn guard compares ledger row counts across wakes.
 
-The transferable artifact is not its code (proprietary) but
-its metric design, which took longer to build than any single
-variant. The rules, each paid for in failed rows: two flanks that
-cannot be traded silently (3% faster with quality held, or 0.5%
-better with speed held); frozen ground truth with a selection plus
-**holdout** split; a null protocol (base against itself scores
-0.976 to 1.013, so anything inside that band is noise); a
-quiet-machine rule with `LOADED` marks that soften numbers instead
-of hiding them; environment failures recorded as environment (a
-security-service-slowed launch is the machine's, not the variant's); and
-an explicit byte-identity-doesn't-matter rule, because pixel diffs
-are not regressions. Any team adopting the loop should budget more
-time for the metric than for the first ten iterations.
+### 3.3 Model selection
 
-## Limits
+If `evolve.md` contains a Models section (a list of model references
+plus a selection note, for example "cheap models first, escalate to a
+frontier model after two stalled rows"), the orchestrator chooses a
+model per iteration and passes it to the subagent, which records it
+in the Model column. A model router such as `pi-model-router` [10] is
+recommended underneath, so a blocked model, an exhausted subscription
+or a rate limit falls through to the next model in a chain instead of
+stalling the run.
 
-This is directed evolution, not open-ended evolution: one lineage,
-one human-set metric, no novelty pressure beyond the Inspiration
-section. It inherits Goodhart risk from any metric loop (the metric
-v2 redesign mid-project is documented in the ledger's history). Gates
-are only as honest as their author. Provider failures abort rows, and
-the loop pauses rather than healing.
+## 4. Evidence
 
-## Engines, declared not assumed
+### 4.1 Synthetic: prime counting
 
-Neither loop pretends to engine-independence. The TODO loop actuates
-tintinweb's `manage_todo_list` tool by name and shape; the evolve loop
-spawns through `subagent`/`subagent_resume` and its prompts assume
-HazAT-style self-closing lifecycles (tested with `edxeth/pi-subagents`).
-Both prompts check for their engine first and stop loudly when it is
-missing instead of stalling silently. The engine choices, and why
-(inspectability, parent-model inheritance, self-termination), are
-argued in the Pi ecosystem subagent survey, not here.
+Counting primes up to n in [80,000, 120,000] in pure Python, gated by
+an exact-count check and measured in a fresh subprocess to defeat
+memoization. Baseline trial division took about 13.8 s; the third
+ledger row (odd-only sieve) reached 0.19 ms. This run validated the
+loop mechanics, not the search.
 
-## Scope
+### 4.2 Deployment: a proprietary real-time renderer
 
-This paper covers the evolve loop only. The deterministic TODO loop
-ships separately. Ralph-loop drivers and FABRIC-style bash empowerment
-are out of scope for this package.
+The loop was used from June to October 2026 on the rendering core of
+a commercial application under hard platform constraints. The
+component is proprietary; we report only aggregate numbers.
+
+| Measure | Value |
+|---|---|
+| Experiments (distinct `evolve.md` runs) | 8 |
+| Ledger rows | 325 |
+| Rows that failed a gate | 26 (8%) |
+| Iteration sessions with usage records | 224 |
+| Distinct models used across iterations | 15 |
+| Iterations run mainly on non-Anthropic models (GLM, Kimi, Llama) | 47 (21%) |
+
+Representative outcomes, each held to a quality gate against frozen
+ground truth: the worst interaction frame in one experiment fell from
+3.56 ms to 1.62 ms; a second experiment reduced a panning cell from
+0.496 ms to 0.281 ms. In one experiment 19 of 32 candidates failed
+their gate, which is the gates doing their job rather than the loop
+failing: no gated-out candidate consumed benchmark time.
+
+Ledger rows routinely record refuted ideas next to their
+measurements, so every later iteration can read them. That negative
+knowledge is what a prose ledger carries and a scalar archive does
+not, a point shared with reflective optimizers such as GEPA [6].
+
+The author's practitioner observation, not a controlled measurement:
+iterations run on weaker or differently trained models repeatedly
+proposed directions the frontier model had not, which motivated P4.
+
+### 4.3 Cost
+
+Pi records token usage per message. Across the 224 iteration sessions:
+
+| Measure | Total | Per iteration |
+|---|---|---|
+| Tokens (input, output, cache read and write) | 7.33 B | 32.7 M |
+| of which cache reads | 6.47 B (88%) | |
+| Output tokens | 29.5 M | 132 k |
+| Catalog-price cost | $5,735 | $25.60 |
+
+Catalog price is the providers' list price as recorded by Pi, not the
+amount billed; most frontier-model iterations ran on flat-rate
+subscriptions. Per candidate, LedgerEvolve is therefore far more
+expensive than a single-completion evolutionary sample. It spends
+that budget on few candidates: 325 rows in four months, against 150
+to several thousand samples per problem in population-based
+systems [3, 4]. Whether few deep candidates beat many shallow ones
+on a given problem is open; for multi-file production code that
+needs profiling and a test suite per candidate, the shallow unit is
+not available.
+
+## 5. Lessons on metric design
+
+The deployment's most transferable artifact is its metric, which took
+longer to build than any single candidate. The rules below
+accumulated across the eight experiments.
+
+1. **Two flanks with an explicit win rule.** Speed and quality are
+   scored separately; a row wins only by being at least 3% faster with
+   quality held, or 0.5% better with speed held, so a regression on
+   one side cannot hide behind a gain on the other.
+2. **Frozen ground truth with a holdout split.** Quality is measured
+   against reference outputs frozen at a base version, on a selection
+   set and a separate holdout set, so candidates cannot fit the cases
+   they are scored on.
+3. **A null protocol.** The base measured against itself defines the
+   noise band (0.976 to 1.013 per scenario); differences inside
+   it are not results.
+4. **Machine state is part of the measurement.** Timings wait for a
+   quiet machine; a number taken under load is marked `LOADED` and
+   treated as soft rather than discarded. Environment failures, such
+   as an operating-system security service slowing process launches,
+   are recorded as environment, not attributed to the candidate.
+5. **Declare what does not matter.** Byte-identical output was
+   explicitly declared not required, so agents do not spend
+   iterations explaining harmless pixel differences.
+
+A team adopting the loop should budget more time for the metric than
+for its first ten iterations.
+
+## 6. Related work
+
+Program evolution with LLMs: FunSearch [1], AlphaEvolve [2],
+OpenEvolve [3], ShinkaEvolve [4] (parent sampling, novelty rejection
+sampling and bandit model selection; state-of-the-art circle packing
+in 150 samples) and CodeEvolve [5] (islands, a CVT-MAP-Elites archive,
+inspiration-based crossover and a weighted model ensemble; matches or
+exceeds AlphaEvolve on 5 of 9 benchmark problems). LedgerEvolve's
+"combine" strategy is the judgement-driven counterpart of CodeEvolve's
+inspiration-based crossover.
+
+Reflection over scalars: GEPA [6] has the LLM read full execution
+traces to diagnose why a candidate failed instead of collapsing them
+into a reward. Ledger rows serve the same purpose in prose.
+
+Autonomous research loops: Karpathy's autoresearch [7] gives one agent
+one file, one metric and a fixed time budget, keeping or discarding
+each change; it is the minimal form of the loop described here, without
+lineage. The Darwin Gödel Machine [8] evolves the agent itself rather
+than a target program. In the Pi ecosystem, `pi-evo-research` [9]
+extends the autoresearch pattern with an explicit population of
+hypotheses and novelty injection on stagnation.
+
+Positioning: LedgerEvolve keeps autoresearch's single-agent
+simplicity, adds the lineage and recombination of the population
+systems, and replaces their selection algorithms with agent
+judgement over a human-readable record.
+
+## 7. Limitations
+
+- **No open-endedness claim.** Every experiment optimizes a
+  human-set metric; novelty comes from the divergence strategy and
+  model diversity, not from an automated novelty measure.
+- **Goodhart risk.** The loop optimizes what the metric measures.
+  Section 5 lists the defences that were needed; gates are only as
+  honest as their author.
+- **High cost per candidate** (Section 4.3).
+- **Sequential.** One iteration runs at a time; wall-clock throughput
+  is bounded by session length.
+- **Engine-bound.** The implementation runs on the Pi coding agent and
+  delegates iterations to a Pi subagent extension (tested with
+  `edxeth/pi-subagents`); the choice of subagent engine is argued in
+  the Pi ecosystem survey [11].
+- **No controlled comparison.** The evidence is one synthetic task and
+  one deployment, not a benchmark against the systems in Section 6.
+
+## 8. Availability
+
+Source, the `evolve-init` setup skill, and a runnable example
+(`examples/json-codec`) are at https://github.com/micuintus/ledgerevolve
+under the MIT license. The project was developed from May 2026 as
+part of `pi-dacmicu`.
+
+## References
+
+1. Romera-Paredes et al. Mathematical discoveries from program search with large language models. Nature 625, 2024. https://doi.org/10.1038/s41586-023-06924-6
+2. Novikov et al. AlphaEvolve: A coding agent for scientific and algorithmic discovery. arXiv:2506.13131, 2025. https://arxiv.org/abs/2506.13131
+3. Sharma. OpenEvolve: an open-source implementation of AlphaEvolve. 2025. https://github.com/algorithmicsuperintelligence/openevolve
+4. Lange, Imajuku, Cetin. ShinkaEvolve: Towards Open-Ended and Sample-Efficient Program Evolution. ICLR 2026. arXiv:2509.19349. https://arxiv.org/abs/2509.19349
+5. Assumpção, Ferreira, Campos, Murai. CodeEvolve: an open source evolutionary coding agent for algorithmic discovery and optimization. arXiv:2510.14150, 2025. https://arxiv.org/abs/2510.14150
+6. Agrawal et al. GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning. ICLR 2026. arXiv:2507.19457. https://arxiv.org/abs/2507.19457
+7. Karpathy. autoresearch. 2026. https://github.com/karpathy/autoresearch
+8. Zhang, Hu, Lu, Lange, Clune. Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents. arXiv:2505.22954, 2025. https://arxiv.org/abs/2505.22954
+9. PriNova. pi-evo-research. 2026. https://github.com/PriNova/pi-evo-research
+10. alexeiled. pi-model-router. 2026. https://www.npmjs.com/package/@alexeiled/pi-model-router
+11. Voigt. Pi ecosystem wiki: subagent extensions. 2026. https://github.com/micuintus/pi-ecosystem-wiki/blob/main/ecosystem/subagent-extensions.md
+
+## How to cite
+
+```bibtex
+@techreport{voigt2026ledgerevolve,
+  author      = {Voigt, Michael},
+  title       = {LedgerEvolve: Judgement-Driven Code Evolution for a Single Developer},
+  institution = {GitHub},
+  type        = {Technical Report},
+  year        = {2026},
+  month       = oct,
+  url         = {https://github.com/micuintus/ledgerevolve/blob/main/paper/ledgerevolve.md}
+}
+```
