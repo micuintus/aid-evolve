@@ -50,7 +50,7 @@ The git branch (inside `target/`) variants are forked from (e.g. `main`, `master
 
 ### 5. Gates
 
-Criteria a variant must satisfy before being scored. A Gate may be a shell command, an LLM judgment, a manual check — anything the subagent can evaluate. Write each Gate as a short, unambiguous instruction; the subagent follows the text literally. Order matters — cheapest/most likely to fail first.
+Criteria a variant must satisfy before being scored. A Gate may be a shell command, an LLM judgment or a manual check: anything the subagent can evaluate. Write each Gate as a short, unambiguous instruction; the subagent follows the text literally. Order matters: cheapest and most likely to fail first.
 
 ### 6. Termination
 
