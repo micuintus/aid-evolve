@@ -123,9 +123,10 @@ stalling the run.
 
 Counting primes up to n in [80,000, 120,000] in pure Python, gated by
 an exact-count check and measured in a fresh subprocess to defeat
-memoization. Baseline trial division took about 13.8 s; the third
-ledger row (odd-only sieve) reached 0.19 ms. This run validated the
-loop mechanics, not the search.
+memoization. The May 2026 pilot recorded its ledger in
+`~/devel/evolve-test/evolve.md`: baseline trial division took about
+13.8 s; the third row (odd-only sieve) reached 0.19 ms. This run
+validated the loop mechanics, not the search.
 
 ### 4.2 Deployment: a proprietary real-time renderer
 
@@ -140,14 +141,14 @@ component is proprietary; we report only aggregate numbers.
 | Rows that failed a gate | 26 (8%) |
 | Iteration sessions with usage records | 224 |
 | Distinct models used across iterations | 15 |
-| Iterations run mainly on non-Anthropic models (GLM, Kimi, Llama) | 47 (21%) |
+| Iterations run mainly on non-Anthropic models (GLM, Kimi, GPT, Nemotron, Muse Spark) | 47 (21%) |
 
 Representative outcomes, each held to a quality gate against frozen
 ground truth: the worst interaction frame in one experiment fell from
 3.56 ms to 1.62 ms; a second experiment reduced a panning cell from
-0.496 ms to 0.281 ms. In one experiment 19 of 32 candidates failed
-their gate, which is the gates doing their job rather than the loop
-failing: no gated-out candidate consumed benchmark time.
+0.496 ms to 0.281 ms. In the overdraw experiment, 19 of 32 candidates
+failed their gate, which is the gates doing their job rather than the
+loop failing: no gated-out candidate consumed benchmark time.
 
 Ledger rows routinely record refuted ideas next to their
 measurements, so every later iteration can read them. That negative
@@ -160,7 +161,9 @@ proposed directions the frontier model had not, which motivated P4.
 
 ### 4.3 Cost
 
-Pi records token usage per message. Across the 224 iteration sessions:
+Pi records token usage per message. Across the sessions that carry the
+iteration instructions (224 of the project's 401 session files; the
+rest are audits, assessments and one-off probes):
 
 | Measure | Total | Per iteration |
 |---|---|---|
@@ -232,6 +235,30 @@ than a target program. In the Pi ecosystem, `pi-evo-research` [9]
 extends the autoresearch pattern with an explicit population of
 hypotheses and novelty injection on stagnation.
 
+The closest ledger: willer/claude-evolve [12] keeps a CSV ledger with
+parents, scores and models, retains failed rows, gates before scoring,
+and runs ideator and coder subagents on a workstation. Its direction
+comes from fixed quotas per generation (5 hill-climbing out of 15 by
+design) with batched ideation; AIDEvolve instead judges every row
+individually and never reserves a hill-climbing share.
+
+Same argument, different shape: CORAL [13] replaces heuristics with
+agents that decide for themselves, in git worktrees, with attempt
+records. Its loop runs several concurrent long-lived agents against
+AIDEvolve's one fresh session per row and one table.
+
+Linear loops: `pi-autoresearch` [14] keeps a run log including
+discards and revisits them when their reasons expire, but it is a
+keep-or-revert line with checks after the benchmark. Weco's AIDE [15]
+keeps a journal tree, but its policy is hard-coded greedy and its
+memory excludes failed nodes. The name is coincidence: AID here
+expands to Artificial Intelligent Design, not Weco's AIDE.
+
+Cluster scale: SATLUTION, as reported second-hand [16], evolves whole
+repositories with pre-evaluation gates and per-version records, on
+large compute with human steering, against AIDEvolve's one workstation
+and no operator in the loop.
+
 Positioning: AIDEvolve keeps autoresearch's single-agent
 simplicity, adds the lineage and recombination of the population
 systems, and replaces their selection algorithms with agent
@@ -255,6 +282,14 @@ judgement over a human-readable record.
 - **No controlled comparison.** The evidence is one synthetic task and
   one deployment, not a benchmark against the systems in Section 6.
 
+## References (continued)
+
+12. Willer. claude-evolve. 2026. https://github.com/willer/claude-evolve
+13. Human-Agent Society. CORAL. arXiv:2604.01658. https://arxiv.org/abs/2604.01658
+14. Cortés. pi-autoresearch. 2026. https://github.com/davebcn87/pi-autoresearch
+15. WecoAI. AIDE. arXiv:2502.13138. https://arxiv.org/abs/2502.13138
+16. SATLUTION (second-hand report; primary source not yet verified). Evolving whole SAT-solver repositories with Cursor and Claude, on large compute with human steering. 2026.
+
 ## 8. Availability
 
 Source, the `evolve-init` setup skill, and a runnable example
@@ -268,10 +303,10 @@ part of `pi-dacmicu`.
 2. Novikov et al. AlphaEvolve: A coding agent for scientific and algorithmic discovery. arXiv:2506.13131, 2025. https://arxiv.org/abs/2506.13131
 3. Sharma. OpenEvolve: an open-source implementation of AlphaEvolve. 2025. https://github.com/algorithmicsuperintelligence/openevolve
 4. Lange, Imajuku, Cetin. ShinkaEvolve: Towards Open-Ended and Sample-Efficient Program Evolution. ICLR 2026. arXiv:2509.19349. https://arxiv.org/abs/2509.19349
-5. Assumpção, Ferreira, Campos, Murai. CodeEvolve: an open source evolutionary coding agent for algorithmic discovery and optimization. arXiv:2510.14150, 2025. https://arxiv.org/abs/2510.14150
+5. Assumpção, Ferreira, Campos, Murai. CodeEvolve: an open source evolutionary coding agent for algorithmic discovery and optimization. arXiv:2510.14150. https://arxiv.org/abs/2510.14150
 6. Agrawal et al. GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning. ICLR 2026. arXiv:2507.19457. https://arxiv.org/abs/2507.19457
 7. Karpathy. autoresearch. 2026. https://github.com/karpathy/autoresearch
-8. Zhang, Hu, Lu, Lange, Clune. Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents. arXiv:2505.22954, 2025. https://arxiv.org/abs/2505.22954
+8. Zhang, Hu, Lu, Lange, Clune. Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents. arXiv:2505.22954. https://arxiv.org/abs/2505.22954
 9. PriNova. pi-evo-research. 2026. https://github.com/PriNova/pi-evo-research
 10. alexeiled. pi-model-router. 2026. https://www.npmjs.com/package/@alexeiled/pi-model-router
 11. Michael Voigt (micu). Pi ecosystem wiki: subagent extensions. 2026. https://github.com/micuintus/pi-ecosystem-wiki/blob/main/ecosystem/subagent-extensions.md
