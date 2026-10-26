@@ -97,6 +97,6 @@ npm test
 
 ## Citing
 
-Voigt, M. (2026). *AIDEvolve: Ledger-Based Evolution by
+Michael Voigt (micu) (2026). *AIDEvolve: Ledger-Based Evolution by
 Artificial Intelligent Design.* Technical report.
 https://github.com/micuintus/aid-evolve/blob/main/paper/aid-evolve.md

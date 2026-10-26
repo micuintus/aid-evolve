@@ -274,13 +274,13 @@ part of `pi-dacmicu`.
 8. Zhang, Hu, Lu, Lange, Clune. Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents. arXiv:2505.22954, 2025. https://arxiv.org/abs/2505.22954
 9. PriNova. pi-evo-research. 2026. https://github.com/PriNova/pi-evo-research
 10. alexeiled. pi-model-router. 2026. https://www.npmjs.com/package/@alexeiled/pi-model-router
-11. Voigt. Pi ecosystem wiki: subagent extensions. 2026. https://github.com/micuintus/pi-ecosystem-wiki/blob/main/ecosystem/subagent-extensions.md
+11. Michael Voigt (micu). Pi ecosystem wiki: subagent extensions. 2026. https://github.com/micuintus/pi-ecosystem-wiki/blob/main/ecosystem/subagent-extensions.md
 
 ## How to cite
 
 ```bibtex
 @techreport{voigt2026aidevolve,
-  author      = {Voigt, Michael},
+  author      = {{Michael Voigt (micu)}},
   title       = {AIDEvolve: Ledger-Based Evolution by Artificial Intelligent Design},
   institution = {GitHub},
   type        = {Technical Report},
