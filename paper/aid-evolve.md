@@ -140,7 +140,7 @@ component is proprietary; we report only aggregate numbers.
 | Ledger rows | 325 |
 | Rows that failed a gate | 26 (8%) |
 | Iteration sessions with usage records | 224 |
-| Distinct models used across iterations | 15 |
+| Distinct model IDs across iterations | 39 (15 model families; same model served by several providers counts once per provider) |
 | Iterations run mainly on non-Anthropic models (GLM, Kimi, GPT, Nemotron, Muse Spark) | 47 (21%) |
 
 Representative outcomes, each held to a quality gate against frozen
