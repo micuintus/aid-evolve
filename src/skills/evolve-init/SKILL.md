@@ -5,9 +5,9 @@ description: Interview the user to prepare an evolve.md for a fresh evolutionary
 
 # evolve-init
 
-You help the user write `evolve.md` for LedgerEvolve. Both the orchestrator and every subagent read this file.
+You help the user write `evolve.md` for AIDEvolve. Both the orchestrator and every subagent read this file.
 
-LedgerEvolve delegates each iteration to a subagent engine (tested: `edxeth/pi-subagents`). If `~/.pi/agent/agents/evolve-iteration.md` does not exist, offer to create it with exactly this content (no body, so the child has no persona):
+AIDEvolve delegates each iteration to a subagent engine (tested: `edxeth/pi-subagents`). If `~/.pi/agent/agents/evolve-iteration.md` does not exist, offer to create it with exactly this content (no body, so the child has no persona):
 
 ```markdown
 ---
@@ -117,7 +117,7 @@ Selection: <the user's selection note>
 |--------|---------|-------|------|-------|
 ```
 
-**Branch naming convention:** each iteration creates a git branch inside `target/` named `ledgerevolve/vN/<slug>`, where `N` is the row's implicit ID (e.g. row #1 → `v1`, row #2 → `v2`). The version number must always match the row ID so the Ledger and branches stay aligned.
+**Branch naming convention:** each iteration creates a git branch inside `target/` named `aid-evolve/vN/<slug>`, where `N` is the row's implicit ID (e.g. row #1 → `v1`, row #2 → `v2`). The version number must always match the row ID so the Ledger and branches stay aligned.
 
 ## After writing
 

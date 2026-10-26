@@ -1,7 +1,7 @@
-# LedgerEvolve
+# AIDEvolve
 
-Judgement-driven code evolution for [Pi](https://pi.dev), sized for one
-developer on one workstation.
+**Ledger-based evolution by Artificial Intelligent Design**, for
+[Pi](https://pi.dev), sized for one developer on one workstation.
 
 An experiment is one Markdown file, `evolve.md`: goal, metric, gates,
 stop conditions, optional models, and a ledger. Each iteration is a
@@ -14,20 +14,20 @@ and the branches are the whole state, and you can read both.
 How it compares to AlphaEvolve, OpenEvolve, ShinkaEvolve, CodeEvolve
 and Karpathy's autoresearch, with evidence from 325 ledger rows on a
 production renderer and the measured token cost:
-[technical report](paper/ledgerevolve.md).
+[technical report](paper/aid-evolve.md).
 
 ## Install
 
 ```sh
-pi install git:github.com/micuintus/ledgerevolve
+pi install git:github.com/micuintus/aid-evolve
 pi install git:github.com/edxeth/pi-subagents
 ```
 
-or `pi install npm:@micuintus/ledgerevolve`. Recommended underneath, so
+or `pi install npm:@micuintus/aid-evolve`. Recommended underneath, so
 a rate-limited or exhausted model falls through to the next instead of
 stalling a run: `pi install npm:@alexeiled/pi-model-router`.
 
-LedgerEvolve delegates each iteration to `edxeth/pi-subagents` through
+AIDEvolve delegates each iteration to `edxeth/pi-subagents` through
 an agent definition without a persona. Create
 `~/.pi/agent/agents/evolve-iteration.md` (the `evolve-init` skill
 offers to):
@@ -68,7 +68,7 @@ trustworthy.
 
 ## Engines
 
-LedgerEvolve is built against specific engines and says so. Iterations
+AIDEvolve is built against specific engines and says so. Iterations
 run through `edxeth/pi-subagents` (spawn tool `subagent`, `auto-exit`
 agent definitions); the orchestrator checks for a spawn tool first and
 stops the run instead of stalling if none exists. The engine was chosen
@@ -80,8 +80,9 @@ The loop driver comes from
 
 ## History
 
-LedgerEvolve was developed from May 2026 inside `pi-dacmicu`, which
-this repository was renamed from. The TODO loop moved to
+AIDEvolve was developed from May 2026 inside `pi-dacmicu`, which this
+repository was renamed from, and was briefly published as
+LedgerEvolve (`@micuintus/ledgerevolve`, now deprecated). The TODO loop moved to
 [EnforcedTodo](https://github.com/micuintus/enforced-todo). The last
 combined state, including the experimental `callback` extension, is
 tagged `dacmicu-final`.
@@ -96,6 +97,6 @@ npm test
 
 ## Citing
 
-Voigt, M. (2026). *LedgerEvolve: Judgement-Driven Code Evolution for a
-Single Developer.* Technical report.
-https://github.com/micuintus/ledgerevolve/blob/main/paper/ledgerevolve.md
+Voigt, M. (2026). *AIDEvolve: Ledger-Based Evolution by
+Artificial Intelligent Design.* Technical report.
+https://github.com/micuintus/aid-evolve/blob/main/paper/aid-evolve.md

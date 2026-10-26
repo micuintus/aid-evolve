@@ -1,6 +1,6 @@
 # Example: JSON encoder speedup
 
-A small, complete LedgerEvolve experiment that runs anywhere Node 20+
+A small, complete AIDEvolve experiment that runs anywhere Node 20+
 runs, in minutes per iteration.
 
 - `target/codec.js`: a correct but deliberately slow JSON encoder.

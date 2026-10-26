@@ -1,4 +1,4 @@
-# LedgerEvolve: Judgement-Driven Code Evolution for a Single Developer
+# AIDEvolve: Ledger-Based Evolution by Artificial Intelligent Design
 
 Technical Report, version 1.0, October 2026
 
@@ -6,7 +6,7 @@ Michael Voigt (micu)
 
 ## Abstract
 
-LedgerEvolve is an evolutionary loop for code optimization designed
+AIDEvolve is an evolutionary loop for code optimization designed
 for one developer on one workstation. It replaces the population
 machinery of systems such as AlphaEvolve, OpenEvolve, ShinkaEvolve and
 CodeEvolve (program databases, islands, LLM ensembles, evaluator
@@ -41,7 +41,7 @@ A single developer optimizing a real codebase faces a different
 budget. Candidates that matter often need profiling, reading code
 across files, and running a test suite before a benchmark means
 anything. That is the work of an agentic coding session, not of one
-completion. LedgerEvolve takes that unit seriously: few, deep
+completion. AIDEvolve takes that unit seriously: few, deep
 candidates instead of many shallow ones, with near-zero
 infrastructure.
 
@@ -65,6 +65,8 @@ which direction is promising from the full record. Divergence is
 explicit policy: the iteration prompt names "diverge" and "creative"
 as first-class strategies alongside "refine" and "combine", because
 hill-climbing alone narrows the search to whatever worked first.
+The name records this choice: evolution by artificial intelligent
+design.
 
 **P4. Model diversity.** Different models produce different ideas.
 The experiment file may name a set of models; iterations draw from it
@@ -95,7 +97,7 @@ The subagent:
 
 1. reads `evolve.md` and the ledger, and may check out any prior branch;
 2. picks a strategy (refine, combine, diverge, invent) and commits to one idea;
-3. creates branch `ledgerevolve/vN/<slug>`, where N equals the new row's index;
+3. creates branch `aid-evolve/vN/<slug>`, where N equals the new row's index;
 4. implements the change and runs every Gate on this candidate only;
 5. if all Gates pass, runs the benchmark once; otherwise records `GATE_FAILED:<gate>`;
 6. appends exactly one ledger row and terminates.
@@ -169,7 +171,7 @@ Pi records token usage per message. Across the 224 iteration sessions:
 
 Catalog price is the providers' list price as recorded by Pi, not the
 amount billed; most frontier-model iterations ran on flat-rate
-subscriptions. Per candidate, LedgerEvolve is therefore far more
+subscriptions. Per candidate, AIDEvolve is therefore far more
 expensive than a single-completion evolutionary sample. It spends
 that budget on few candidates: 325 rows in four months, against 150
 to several thousand samples per problem in population-based
@@ -214,7 +216,7 @@ OpenEvolve [3], ShinkaEvolve [4] (parent sampling, novelty rejection
 sampling and bandit model selection; state-of-the-art circle packing
 in 150 samples) and CodeEvolve [5] (islands, a CVT-MAP-Elites archive,
 inspiration-based crossover and a weighted model ensemble; matches or
-exceeds AlphaEvolve on 5 of 9 benchmark problems). LedgerEvolve's
+exceeds AlphaEvolve on 5 of 9 benchmark problems). AIDEvolve's
 "combine" strategy is the judgement-driven counterpart of CodeEvolve's
 inspiration-based crossover.
 
@@ -230,7 +232,7 @@ than a target program. In the Pi ecosystem, `pi-evo-research` [9]
 extends the autoresearch pattern with an explicit population of
 hypotheses and novelty injection on stagnation.
 
-Positioning: LedgerEvolve keeps autoresearch's single-agent
+Positioning: AIDEvolve keeps autoresearch's single-agent
 simplicity, adds the lineage and recombination of the population
 systems, and replaces their selection algorithms with agent
 judgement over a human-readable record.
@@ -256,7 +258,7 @@ judgement over a human-readable record.
 ## 8. Availability
 
 Source, the `evolve-init` setup skill, and a runnable example
-(`examples/json-codec`) are at https://github.com/micuintus/ledgerevolve
+(`examples/json-codec`) are at https://github.com/micuintus/aid-evolve
 under the MIT license. The project was developed from May 2026 as
 part of `pi-dacmicu`.
 
@@ -277,13 +279,13 @@ part of `pi-dacmicu`.
 ## How to cite
 
 ```bibtex
-@techreport{voigt2026ledgerevolve,
+@techreport{voigt2026aidevolve,
   author      = {Voigt, Michael},
-  title       = {LedgerEvolve: Judgement-Driven Code Evolution for a Single Developer},
+  title       = {AIDEvolve: Ledger-Based Evolution by Artificial Intelligent Design},
   institution = {GitHub},
   type        = {Technical Report},
   year        = {2026},
   month       = oct,
-  url         = {https://github.com/micuintus/ledgerevolve/blob/main/paper/ledgerevolve.md}
+  url         = {https://github.com/micuintus/aid-evolve/blob/main/paper/aid-evolve.md}
 }
 ```

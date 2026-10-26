@@ -1,13 +1,13 @@
 {
-  "name": "@micuintus/ledgerevolve",
+  "name": "@micuintus/aid-evolve",
   "version": "1.0.0",
-  "description": "Judgement-driven code evolution for Pi: one Markdown experiment, a ledger of lineages, one git branch per candidate.",
+  "description": "Ledger-based evolution by Artificial Intelligent Design: code evolution for Pi in which an LLM, not a genetic operator, decides each step.",
   "type": "module",
   "license": "MIT",
   "author": "Michael Voigt (micu) <micuintus@gmx.de>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/micuintus/ledgerevolve.git"
+    "url": "git+https://github.com/micuintus/aid-evolve.git"
   },
   "keywords": [
     "pi-package",
@@ -28,7 +28,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "tsx test/ledgerevolve.test.ts"
+    "test": "tsx test/aid-evolve.test.ts"
   },
   "dependencies": {
     "@micuintus/loop-driver": "^1.0.0"
